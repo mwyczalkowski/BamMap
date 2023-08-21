@@ -1,60 +1,15 @@
 # Test and remove BamMap-defined data.  Prints new BamMap file excluding deleted UUIDs to stdout
 #
-# Usage: BamMap.rm.sh [options] UUID [UUID2 ...]
+# Usage: rm_UUID.sh [options] UUID [UUID2 ...]
 #
 # -d: dry run.  Perform all existence tests but do not remove data
 # -v: verbose
-# -B BamMap: BamMap path.  Required
+# -B BamMap: BamMap path.  Must be in BamMap 3 format.  Required
 # -t tmp.txt: temporary file listing UUIDs successfully removed.  Default: uuids-deleted.tmp
 # -n: do not remove temporary file 
 # -C: Continue even if unable to find / remove UUID.  
 
 # If UUID is '-', read UUIDs from STDIN
-
-# Removes data file and associated directory 
-function removeUUID {
-LUUID=$1
-
-if ! grep -q "$LUUID" "$BAMMAP"  ;  then
-    if [ -z $CONTINUE_ON_ERROR ]; then 
-        >&2 echo Error: $LUUID not found in $BAMMAP.  Quitting
-        exit 1
-    else
-        >&2 echo Note: $LUUID not found in $BAMMAP.  Continuing
-    fi
-fi
-DIR=$(dirname $(grep "$LUUID" "$BAMMAP" | cut -f 6))
-if [ $VERBOSE ]; then
-    >&2 echo Removing $DIR
-fi
-
-CMD="rm -rf $DIR"
-if [ $DRYRUN ]; then
-    >&2 echo Dry Run: $CMD
-else
-    eval $CMD
-fi
-
-# Test exit status
-rc=$?
-if [[ $rc != 0 ]]; then
-    if [ -z $CONTINUE_ON_ERROR ]; then 
-        >&2 echo Fatal error $rc: $!.  Exiting.
-        exit $rc;
-    else
-        >&2 echo Error removing $DIR
-        >&2 echo $rc: $!
-        >&2 echo Continuing
-    fi
-else    # Success
-    if [ $VERBOSE ]; then
-        >&2 echo Success
-    fi
-    echo $LUUID >> $TMP
-fi
-
-}
-
 
 TMP="uuids-deleted.tmp"
 while getopts ":B:dvt:Cn" opt; do
@@ -90,6 +45,54 @@ while getopts ":B:dvt:Cn" opt; do
   esac
 done
 shift $((OPTIND-1))
+
+
+# Removes data file and associated directory 
+function removeUUID {
+    LUUID=$1
+
+    if ! grep -q "$LUUID" "$BAMMAP"  ;  then
+        if [ -z $CONTINUE_ON_ERROR ]; then 
+            >&2 echo Error: $LUUID not found in $BAMMAP.  Quitting
+            exit 1
+        else
+            >&2 echo Note: $LUUID not found in $BAMMAP.  Continuing
+        fi
+    fi
+    # this makes this specific to BamMap3 format
+    DIR=$(dirname $(grep "$LUUID" "$BAMMAP" | cut -f 4))
+#    if [ $VERBOSE ]; then
+#        >&2 echo Removing $DIR
+#    fi
+
+    CMD="rm -rf $DIR"
+    if [ $DRYRUN ]; then
+        >&2 echo Dry Run: $CMD
+    else
+        >&2 echo Running: $CMD
+        eval $CMD
+    fi
+
+    # Test exit status
+    rc=$?
+    if [[ $rc != 0 ]]; then
+        if [ -z $CONTINUE_ON_ERROR ]; then 
+            >&2 echo Fatal error $rc: $!.  Exiting.
+            exit $rc;
+        else
+            >&2 echo Error removing $DIR
+            >&2 echo $rc: $!
+            >&2 echo Continuing
+        fi
+    else    # Success
+        if [ $VERBOSE ]; then
+            >&2 echo Success
+        fi
+        echo $LUUID >> $TMP
+    fi
+
+}
+
 
 if [ -z $BAMMAP ]; then
     >&2 echo Error: BamMap not defined \[-B\]
