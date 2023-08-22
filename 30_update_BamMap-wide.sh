@@ -10,4 +10,7 @@ head -n1 $BAMMAPW > $BMWOUT
 fgrep -f <(cut -f 2 $BM3 | tail -n +2) $BAMMAPW >> $BMWOUT
 
 
+
+>&2 echo Successfully completed.
 >&2 echo Written to $BMWOUT
+>&2 echo Original BamMap: $BAMMAPW
