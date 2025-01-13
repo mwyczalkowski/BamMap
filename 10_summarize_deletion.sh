@@ -73,6 +73,8 @@ echo "                        TOTAL: $TOT_SIZE Tb in $TOT_COUNT files"
 
 source config.sh
 
+>&2 echo BAMMAP3: $BAMMAP3
+
 CATALOG_TMP="dat/catalog.tmp"
 mkdir -p dat
 >&2 echo Catalog: $CATALOG
